@@ -1,3 +1,3 @@
-# Welcome to your Lovable project
+# BacktestPro Frontend dashboard
 
-TODO: Document your project here
+Manage ur backtest's
