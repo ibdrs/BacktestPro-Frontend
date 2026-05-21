@@ -35,8 +35,14 @@ export interface Trade {
   pnl: number;
 }
 
+export interface EquityCurvePoint {
+  timestamp: number;
+  value: number;
+}
+
 export interface BacktestResult extends BacktestRun {
   trades: Trade[];
+  equity_curve: EquityCurvePoint[] | null;
 }
 
 export interface ImportResult {

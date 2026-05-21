@@ -43,7 +43,7 @@ export default function NewBacktest() {
         positionSize: Number(positionSize),
       }),
     onSuccess: (result) => {
-      navigate(`/history/detail?id=${result.id}`);
+      navigate(`/results?id=${result.id}`);
     },
     onError: (err: Error) => setFormError(err.message),
   });
