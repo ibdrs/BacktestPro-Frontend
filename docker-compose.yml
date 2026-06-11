@@ -1,0 +1,9 @@
+services:
+  frontend:
+    image: ghcr.io/ibdrs/backtestpro-frontend:latest
+    build:
+      context: .
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
+    ports:
+      - "8080:8080"
