@@ -1,16 +1,24 @@
-import { NavLink, useLocation } from "react-router-dom";
-import { Home, Play, BarChart3, History, Globe, TrendingUp } from "lucide-react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { Home, Play, BarChart3, History, Globe, TrendingUp, LogOut } from "lucide-react";
+import { getStoredEmail, clearSession } from "@/lib/api";
 
 const navItems = [
-  { to: "/dashboard", label: "Dashboard / Home", icon: Home },
-  { to: "/new-backtest", label: "New Backtest / Setup", icon: Play },
-  { to: "/results", label: "Backtest Results", icon: BarChart3 },
-  { to: "/history", label: "Backtest History", icon: History },
-  { to: "/templates", label: "Strategy Templates", icon: Globe },
+  { to: "/dashboard",    label: "Dashboard / Home",      icon: Home },
+  { to: "/new-backtest", label: "New Backtest / Setup",  icon: Play },
+  { to: "/history",      label: "Backtest History",      icon: History },
+  { to: "/templates",    label: "Strategy Templates",    icon: Globe },
 ];
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
+  const navigate  = useNavigate();
+  const email     = getStoredEmail() ?? "user";
+  const initials  = email.slice(0, 2).toUpperCase();
+
+  const handleLogout = () => {
+    clearSession();
+    navigate("/");
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -22,11 +30,19 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           </div>
           <span className="text-lg font-semibold">BacktestPro</span>
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span>demo@user.com</span>
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <span>{email}</span>
           <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-            <span className="text-xs font-medium">DU</span>
+            <span className="text-xs font-medium">{initials}</span>
           </div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1 text-xs hover:text-foreground transition-colors"
+            title="Log out"
+          >
+            <LogOut className="h-4 w-4" />
+            Log out
+          </button>
         </div>
       </header>
 
@@ -35,7 +51,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <aside className="w-56 shrink-0 border-r min-h-[calc(100vh-57px)] bg-sidebar p-3">
           <nav className="flex flex-col gap-1">
             {navItems.map((item) => {
-              const isActive = location.pathname === item.to || 
+              const isActive = location.pathname === item.to ||
                 (item.to === "/dashboard" && location.pathname === "/");
               return (
                 <NavLink

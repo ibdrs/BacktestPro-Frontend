@@ -121,11 +121,8 @@ export default function BacktestResults() {
   });
 
   if (!id || isNaN(id)) {
-    return (
-      <DashboardLayout>
-        <p className="text-sm text-destructive mt-8">No backtest ID provided.</p>
-      </DashboardLayout>
-    );
+    navigate("/history", { replace: true });
+    return null;
   }
 
   if (isLoading) return <DashboardLayout><p className="text-sm text-muted-foreground mt-8">Loading…</p></DashboardLayout>;

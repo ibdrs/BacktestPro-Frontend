@@ -1,5 +1,27 @@
 const BASE_URL = import.meta.env.VITE_API_URL ?? '';
 
+// ── Token storage ────────────────────────────────────────────────────────────
+
+export function getToken(): string | null {
+  return localStorage.getItem('backtestpro_token');
+}
+
+export function getStoredEmail(): string | null {
+  return localStorage.getItem('backtestpro_email');
+}
+
+export function setSession(token: string, email: string): void {
+  localStorage.setItem('backtestpro_token', token);
+  localStorage.setItem('backtestpro_email', email);
+}
+
+export function clearSession(): void {
+  localStorage.removeItem('backtestpro_token');
+  localStorage.removeItem('backtestpro_email');
+}
+
+// ── Types ────────────────────────────────────────────────────────────────────
+
 export interface Dataset {
   id: number;
   name: string;
@@ -53,16 +75,52 @@ export interface ImportResult {
   errors: string[];
 }
 
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, options);
+// ── Core fetch wrapper ───────────────────────────────────────────────────────
+
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const token = getToken();
+  const headers: Record<string, string> = {
+    ...(options.headers as Record<string, string>),
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
+
+  if (res.status === 401) {
+    clearSession();
+    window.location.href = '/';
+    throw new Error('Session expired. Please log in again.');
+  }
+
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error((body as { error?: string }).error ?? `Request failed: ${res.status}`);
   }
+
   return res.json() as Promise<T>;
 }
 
+// ── API ──────────────────────────────────────────────────────────────────────
+
 export const api = {
+  auth: {
+    login: (email: string, password: string) =>
+      request<{ token: string; user: { id: number; email: string } }>('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      }),
+    register: (email: string, password: string) =>
+      request<{ user: { id: number; email: string } }>('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      }),
+  },
+
   datasets: {
     list: () => request<Dataset[]>('/api/datasets'),
     import: (file: File) => {

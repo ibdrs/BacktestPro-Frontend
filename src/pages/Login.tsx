@@ -1,18 +1,44 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { TrendingUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { api, setSession, getToken } from "@/lib/api";
 
 export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<"login" | "register">("login");
 
-  const handleSignIn = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (getToken()) navigate("/dashboard", { replace: true });
+  }, [navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate("/dashboard");
+    setError("");
+    setLoading(true);
+
+    try {
+      if (mode === "login") {
+        const { token, user } = await api.auth.login(email, password);
+        setSession(token, user.email);
+        navigate("/dashboard");
+      } else {
+        await api.auth.register(email, password);
+        const { token, user } = await api.auth.login(email, password);
+        setSession(token, user.email);
+        navigate("/dashboard");
+      }
+    } catch (err: any) {
+      setError(err.message ?? "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -30,8 +56,17 @@ export default function Login() {
           </div>
 
           <div className="border rounded-lg p-6">
-            <h2 className="text-lg font-semibold mb-4">Sign In</h2>
-            <form onSubmit={handleSignIn} className="space-y-4">
+            <h2 className="text-lg font-semibold mb-4">
+              {mode === "login" ? "Sign In" : "Create Account"}
+            </h2>
+
+            {error && (
+              <p className="text-sm text-destructive mb-4 bg-destructive/10 px-3 py-2 rounded-md">
+                {error}
+              </p>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label>Email Address</Label>
                 <Input
@@ -39,6 +74,7 @@ export default function Login() {
                   placeholder="your@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  required
                 />
               </div>
               <div>
@@ -48,35 +84,27 @@ export default function Login() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  required
                 />
-                <div className="text-right mt-1">
-                  <button type="button" className="text-xs text-muted-foreground underline">
-                    Forgot password?
-                  </button>
-                </div>
               </div>
-              <Button type="submit" className="w-full">Sign In</Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={() => navigate("/dashboard")}
-              >
-                Continue as Demo User
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Please wait…" : mode === "login" ? "Sign In" : "Create Account"}
               </Button>
             </form>
           </div>
 
           <p className="text-center text-sm text-muted-foreground mt-6">
-            Don't have an account?{" "}
-            <button className="underline font-medium text-foreground">Sign up</button>
+            {mode === "login" ? "Don't have an account? " : "Already have an account? "}
+            <button
+              className="underline font-medium text-foreground"
+              onClick={() => { setMode(mode === "login" ? "register" : "login"); setError(""); }}
+            >
+              {mode === "login" ? "Sign up" : "Sign in"}
+            </button>
           </p>
         </div>
         <p className="text-center text-xs text-muted-foreground mt-6">
           © 2025 BacktestPro. All rights reserved.
-        </p>
-        <p className="text-center text-xs text-muted-foreground mt-1">
-          Terms of Service · Privacy Policy
         </p>
       </div>
     </div>
