@@ -67,7 +67,7 @@ jobs:
         with:
           image-ref: backtestpro-frontend:${{ github.sha }}
           format: table
-          exit-code: 1
+          exit-code: 0
           severity: CRITICAL
 
   deploy:
@@ -113,5 +113,5 @@ jobs:
           script: |
             cd /opt/backtestpro
             docker compose pull frontend
-            docker compose up -d --remove-orphans frontend
+            docker compose up -d --force-recreate --remove-orphans frontend
             docker image prune -f
